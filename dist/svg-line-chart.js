@@ -11276,6 +11276,7 @@ __export(exports, {
   insertInto: () => insertInto,
   plot: () => plot,
   pointWidth: () => pointWidth,
+  polygon: () => polygon,
   polyline: () => polyline,
   renderAxis: () => renderAxis,
   scaleDates: () => scaleDates,
@@ -11287,6 +11288,7 @@ var import_date_fns = __toModule(require_date_fns());
 var import_param_case = __toModule(require_dist4());
 var offsetX = 10;
 var offsetY = 5;
+var options_height = 0;
 var html;
 function plot(renderer) {
   html = renderer;
@@ -11299,30 +11301,70 @@ function _plot(data, options) {
   const yPoints = generateLabelRange(min, max, options.yNumLabels);
   const yScaledLabels = scalePoints(offsetY, options.height, min, max, yPoints);
   const l = polyline(x, y, options.line);
+  console.log("options_height :" + options_height);
+  const gradient = polygon(x, y, options.polygon);
+  console.log("const gradient " + gradient);
   return html`
     <svg viewBox="0 0 ${options.width} ${options.height}">
+
+      <defs>
+        <linearGradient id="polygrad" >
+          <stop offset=${options.polygonGradient.offSet1} stop-color=${options.polygonGradient.stopColor1} />
+          <stop offset=${options.polygonGradient.offSet2} stop-color=${options.polygonGradient.stopColor2} />
+        </linearGradient>
+      </defs>
+
       <title>${options.title}</title>
-      ${renderAxis(offsetX, offsetX, 0, options.height - offsetY, options.xAxis)}
+
+      <!-- THIS IS HOW YOU COMMENT IDIOT -->
+      <!-- This supposedly renders y-axis -->
+      ${renderAxis(offsetX, offsetX, 0, options.height - offsetY, options.yAxis)}
+
+      <!-- This supposedly renders x-axis -->
+
       ${renderAxis(offsetX, options.width, options.height - offsetY, options.height - offsetY, options.yAxis)}
+
+
+      <!-- This will render labels along the y-axis/vertically -->
+      <!--
       ${axisLabel(0, (options.height - offsetY) / 2, options.yLabel.name, __objSpread({
     style: "transform: rotate(-90deg);"
   }, options.yLabel), {style: "transform: translate(-15%, 55%)"})}
+      -->
+
+      <!-- This will render labels along the y-axis/vertically -->
+      <!--
       ${yPoints.map((p, i) => {
     const scaledPoint = yScaledLabels[i];
     return axisLabel(offsetX / 2, scaledPoint + 0.5, p, options.yLabel);
   })}
+      -->
+
+      <!-- This will render straight horizontal grey lines -->
+      <!--
       ${yScaledLabels.map((p) => {
     return renderAxis(offsetX, options.width, p, p, options.yLabel);
   })}
+      -->
+
+      <!-- This will render labels along the x-axis / horizontally -->
+      <!--
       ${labels.map(({pos, name}) => {
     return axisLabel(pos, options.height - offsetY / 2, name, options.xLabel);
   })}
+      -->
+
+
+      <!-- This will render straight vertical grey lines -->
+      <!--
       ${labels.map(({pos}, i) => {
     if (i === 0)
       return;
     return renderAxis(pos, pos, 0, options.height - offsetY, options.xLabel);
   })}
-      ${l}
+      -->
+      <!-- ${l} -->
+        <!-- ${gradient} -->
     </svg>
   `;
 }
@@ -11341,6 +11383,36 @@ function polyline(x, y, options) {
   points = points.slice(0, -1);
   return html`
     <polyline ...${options} points=${points} />
+  `;
+}
+function polygon(x, y, options) {
+  options = toParamCase(options);
+  if (x.length !== y.length) {
+    throw new Error(`x and y parameters need to be of same length. They are not: x (${x.length}) and y (${y.length}).`);
+  }
+  if (x.length === 0) {
+    throw new Error("Length of data x and y cannot be zero");
+  }
+  console.log("-----------polygon function");
+  let gradient_points = "";
+  let len = x.length;
+  console.log("length = " + len);
+  let bottom = 30;
+  let b = options_height + offsetY;
+  console.log("options.height : " + options_height);
+  console.log("offsetY :" + offsetY);
+  console.log("options.height - offsetY :" + b);
+  console.log("bottom = " + bottom);
+  gradient_points += `${x[0]},${bottom} `;
+  console.log("gradient_points[0] = " + gradient_points);
+  for (let i = 0; i < x.length; i++) {
+    gradient_points += `${x[i]},${y[i]} `;
+  }
+  gradient_points += `${x[len - 1]},${bottom} `;
+  console.log("-----------end of polygon function");
+  return html`
+    <polygon ...${options} points=${gradient_points} />
+
   `;
 }
 function sortRangeAsc(range) {
@@ -11423,6 +11495,13 @@ function toParamCase(obj) {
 }
 function renderAxis(x1, x2, y1, y2, options) {
   options = toParamCase(options);
+  console.log("_____________RENDERING AXIS_________________");
+  console.log("x1: " + x1);
+  console.log("x2: " + x2);
+  console.log("y1: " + y1);
+  console.log("y2: " + y2);
+  console.log("optioms: " + options);
+  console.log("_____________STOP RENDERING AXIS_________________");
   return html`
     <g ...${options}>
       <line x1=${x1} x2=${x2} y1=${y1} y2=${y2}></line>
@@ -11470,6 +11549,7 @@ function generateLabelRange(min, max, numLabels) {
   insertInto,
   plot,
   pointWidth,
+  polygon,
   polyline,
   renderAxis,
   scaleDates,
